@@ -1,0 +1,99 @@
+/* Semantic tokens for a Hebrew-first UI.
+   Copy to src/styles/tokens.css. Physical left/right are absent on purpose.
+   --font-ui is for unpointed interface text.
+   --font-nikud is for vowel marks. Heebo and Rubik stay off that stack. */
+
+:root {
+  color-scheme: light;
+  --font-ui: "Alef", "Assistant", "Heebo", "Noto Sans Hebrew", sans-serif;
+  --font-nikud: "Noto Sans Hebrew", "Noto Serif Hebrew", "Frank Ruhl Libre", "David Libre", "Alef", sans-serif;
+  --font-reading: "Frank Ruhl Libre", "David Libre", "Noto Serif Hebrew", serif;
+  --font-display: "Rubik", "Suez One", "Noto Sans Hebrew", sans-serif;
+  --font-mono: "JetBrains Mono", "Alef", ui-monospace, monospace;
+  --line-height-ui: 1.6;
+  --line-height-reading: 1.75;
+  --line-height-nikud: 1.9;
+  --letter-spacing-hebrew: 0;
+  --color-bg: #f7f4ef;
+  --color-fg: #1c1915;
+  --color-muted: #5c564c;
+  --color-accent: #0f6b4c;
+  --color-accent-fg: #ffffff;
+  --color-danger: #9f1239;
+  --color-danger-fg: #ffffff;
+  --color-border: #e4ddd2;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --radius-md: 0.75rem;
+  --shadow-sm: 0 1px 2px rgb(28 25 21 / 0.06);
+  --duration-fast: 160ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-bg: #16130f;
+    --color-fg: #f4efe6;
+    --color-muted: #c2b8aa;
+    --color-accent: #3dbe8b;
+    --color-accent-fg: #082117;
+    --color-danger: #fb7185;
+    --color-danger-fg: #2a0a12;
+    --color-border: #3a332b;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-bg: #f7f4ef;
+  --color-fg: #1c1915;
+  --color-muted: #5c564c;
+  --color-accent: #0f6b4c;
+  --color-accent-fg: #ffffff;
+  --color-danger: #9f1239;
+  --color-danger-fg: #ffffff;
+  --color-border: #e4ddd2;
+  --shadow-sm: 0 1px 2px rgb(28 25 21 / 0.06);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #16130f;
+  --color-fg: #f4efe6;
+  --color-muted: #c2b8aa;
+  --color-accent: #3dbe8b;
+  --color-accent-fg: #082117;
+  --color-danger: #fb7185;
+  --color-danger-fg: #2a0a12;
+  --color-border: #3a332b;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-ui);
+  font-size: 1.0625rem;
+  line-height: var(--line-height-ui);
+  letter-spacing: var(--letter-spacing-hebrew);
+}
+
+.reading {
+  font-family: var(--font-reading);
+  line-height: var(--line-height-reading);
+}
+
+.nikud {
+  font-family: var(--font-nikud);
+  line-height: var(--line-height-nikud);
+}
+
+.nums {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}

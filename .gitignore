@@ -1,0 +1,7 @@
+.hebrew-skills/
+__pycache__/
+.pytest_cache/
+node_modules/
+*.pyc
+dist-test/
+.DS_Store

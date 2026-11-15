@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.2.2
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Shellcheck
+        run: shellcheck install.sh script/test-install.sh
+      - name: Validate skills
+        run: python3 script/validate_skills.py
+      - name: Unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Installer tests
+        run: bash script/test-install.sh
+      - name: RTL lint
+        run: |
+          python3 script/rtl_lint.py skills/ui-rtl-system/tokens.template.css tests/fixtures/rtl/good.css tests/fixtures/rtl/good.html
+          python3 script/rtl_lint.py --expect-fail tests/fixtures/rtl/bad.css tests/fixtures/rtl/bad.html
+      - name: stylelint example
+        run: |
+          npx --yes stylelint@16.25.0 --config lint/stylelint.config.cjs skills/ui-rtl-system/tokens.template.css tests/fixtures/rtl/good.css
+          if npx --yes stylelint@16.25.0 --config lint/stylelint.config.cjs tests/fixtures/rtl/bad.css; then
+            echo "bad.css should fail stylelint"
+            exit 1
+          fi
+      - name: Markdown lint
+        run: python3 script/markdown_lint.py
+      - name: markdownlint-cli2
+        run: npx --yes markdownlint-cli2@0.17.2
