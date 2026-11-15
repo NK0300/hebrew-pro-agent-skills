@@ -1,0 +1,8 @@
+# A local install into this repo. The committed snapshot under dist/ is not ignored.
+/.hebrew-skills/
+__pycache__/
+.pytest_cache/
+node_modules/
+*.pyc
+dist-test/
+.DS_Store

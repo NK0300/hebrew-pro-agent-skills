@@ -1,0 +1,18 @@
+.card {
+  margin-inline: 1rem;
+  padding-inline-end: 4px;
+  border-inline-start: 3px solid var(--color-accent);
+  text-align: start;
+  letter-spacing: 0;
+}
+
+.nums {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--letter-spacing-hebrew);
+}
+
+.widget {
+  /* third-party widget that only accepts a physical property */
+  /* stylelint-disable-next-line property-disallowed-list */
+  margin-left: 1px; /* rtl-lint-disable-line */
+}

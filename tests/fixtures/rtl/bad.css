@@ -1,0 +1,10 @@
+.card {
+  margin-left: 1rem;
+  padding-right: 4px;
+  text-align: right;
+  letter-spacing: 0.08em;
+}
+
+.pin {
+  left: 0;
+}

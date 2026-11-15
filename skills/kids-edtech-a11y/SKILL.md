@@ -1,0 +1,62 @@
+---
+name: kids-edtech-a11y
+description: "Use when building a children's product, especially a Hebrew reading or learning app. Covers large tap targets, audio and Hebrew TTS, WCAG 2.2 AA, privacy for minors, and a ban on dark patterns. גם לילדים, קריאה, הנגשה, ושמע."
+license: MIT
+metadata:
+  author: NK
+  version: "1.0.0"
+  activation: description
+  profiles: kids-hebrew
+  order: "06"
+  globs: "**/*a11y*.*,**/*kid*.*,**/*child*"
+---
+
+# Kids, edtech, and accessibility
+
+## When to use
+
+Load this for a product a child uses, including a Hebrew reading app with nikud. Pair it with `hebrew-content-nikud` and `ui-rtl-system`. This is product guidance, not a legal opinion.
+
+## Rules
+
+1. WCAG 2.2 AA is the floor. Body text contrast at least 4.5:1, large text and UI boundaries at least 3:1, and a visible focus (2.4.7, and 2.4.11 when the focus is not obscured).
+2. WCAG 2.2 target size (2.5.8) is 24 by 24 CSS pixels. For a child, use at least 44 by 44. Space targets so a miss does not hit a destructive action.
+3. The reading surface shows the sentence, not only audio. Early readers get nikud. Sentences stay short. One idea per screen beats a dashboard.
+4. Audio has a replay control and a stop control. Do not loop autoplay. Do not start sound before a gesture when the browser would block it anyway, and do not punish a child who tapped mute.
+5. Hebrew speech: a human recording is the curriculum. TTS is the fallback. Nikud makes TTS more accurate; send the pointed string. Slow the rate for early readers. Highlight the current word without trapping keyboard focus. Test a real Hebrew voice, not an English voice reading Hebrew letters.
+6. No dark patterns. No fake countdown, no streak that shames a missed day, no "are you sure you want to stop learning?" loop, no disguised ads, no nagging to rate the app.
+7. Privacy for minors: collect the minimum, no behavioral ads, no precise location, no public child profile, no child name or free text in analytics or logs. A parental gate stands in front of purchases and outbound links. The Israeli Privacy Protection Law, and COPPA where a US audience exists, need a person to decide. Do not invent a compliance claim.
+8. Errors are calm Hebrew and a next step ("ננסה שוב"), not a red alarm. Destructive actions ask once, in plain language, without guilt.
+9. Motion follows `interactive-motion`: reduced motion, no flashing above three per second.
+10. Do not require a fine drag, a hover, or two hands. Reading progress is visible as text, not only as a color.
+
+## Examples
+
+### Good
+
+```html
+<button type="button" style="min-inline-size: 44px; min-block-size: 44px">
+  להקריא שוב
+</button>
+<p>שָׁלוֹם. נקרא את המילה הזאת.</p>
+```
+
+The button names the action, the target is large, and the pointed word is on screen as well as in audio.
+
+### Bad
+
+```html
+<div onclick="next()" style="font-size: 12px">X</div>
+<p>אל תוותרו על הרצף! נשארו 3 שניות.</p>
+```
+
+A tiny unlabeled hit target and a shame-and-urgency pattern.
+
+## Checklist
+
+- [ ] Targets are at least 44px, contrast meets AA, and focus is visible.
+- [ ] The words are on screen, with nikud when the reader is early.
+- [ ] Audio can be replayed and stopped, and TTS receives pointed Hebrew.
+- [ ] There is no streak shame, fake timer, or disguised ad.
+- [ ] Logs and analytics do not contain a child's name or free text.
+- [ ] A parental gate covers purchases and outbound links, or the gap is reported.
