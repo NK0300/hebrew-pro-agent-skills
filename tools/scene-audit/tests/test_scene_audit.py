@@ -257,6 +257,51 @@ class EndToEndTest(unittest.TestCase):
         self.assertIn("scene-old.png", out)
         self.assertIn("render not listed in the sheet: scene-2.png", out)
 
+    def test_changed_spec_needs_new_approval(self):
+        run("rules", *self.book)
+        run("rules", "--approve", *self.book)
+        self.assertEqual(run("scan", "--all", *self.book)[0], 0)
+        spec = self.root / "spec" / "spec.md"
+        spec.write_text(spec.read_text(encoding="utf-8") + "\n## 7.1 חדש\nכלל חדש.\n", encoding="utf-8")
+        code, out = run("scan", "--all", *self.book)
+        self.assertEqual(code, 2, out)
+        self.assertIn("not approved", out)
+        self.assertIn("7.1", (self.root / "work" / "spec.txt").read_text(encoding="utf-8"))
+        self.assertEqual(run("rules", "--approve", *self.book)[0], 0)
+        self.assertEqual(run("scan", "--all", *self.book)[0], 0)
+
+    def test_csv_decision_does_not_carry_to_a_rerender(self):
+        run("rules", *self.book)
+        run("rules", "--approve", *self.book)
+        run("scan", "--scene", "1", *self.book)
+        finding = {"finding_id": "01-F01", "code": "AN", "type": "spec_violation", "spec_ref": "5.1", "severity": "critical", "confidence": "likely", "bbox": [500, 500, 600, 600], "where": "יד", "problem": "שש אצבעות", "fix_kind": "local_edit", "fix_instruction": "x"}
+        doc = self.scene_doc()
+        doc["findings"] = [finding]
+        self.save_doc(doc)
+        run("report", *self.book)
+        path = self.root / "out" / "decisions.csv"
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+            fields = list(rows[0].keys())
+        rows[0]["decision"] = "ok"
+        with path.open("w", encoding="utf-8-sig", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(rows)
+        # Re-render before applying: the same id now names a different defect.
+        draw_scene(self.root / "scenes" / "scene-1.png", mark=True)
+        run("scan", "--scene", "1", *self.book)
+        doc = self.scene_doc()
+        doc["findings"] = [dict(finding, code="OB", bbox=[100, 100, 200, 200], problem="כוס מרחפת")]
+        self.save_doc(doc)
+        code, out = run("decide", "--apply", *self.book)
+        self.assertIn("1 row(s) ignored", out)
+        self.assertEqual(self.scene_doc()["findings"][0].get("status", "pending"), "pending")
+        run("report", *self.book)
+        with path.open(encoding="utf-8-sig", newline="") as handle:
+            self.assertEqual(next(csv.DictReader(handle))["decision"], "")
+        self.assertFalse((self.root / "work" / "dismissed.json").exists())
+
     def test_skill_install(self):
         dest = Path(self.tmp.name) / "skills"
         code, out = run("skill", "--dest", str(dest))

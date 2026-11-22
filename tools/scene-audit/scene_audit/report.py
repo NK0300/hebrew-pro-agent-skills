@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import json
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -15,7 +17,7 @@ from .geometry import pad_box
 from .imaging import COUNT_COLOR, SEVERITY_COLORS, draw_boxes, fit_scale, open_rgb, resize, save_png
 from . import taxonomy as tx
 
-DECISION_FIELDS = ["finding_id", "scene_id", "severity", "type", "code", "where", "problem", "fix_kind", "fix_instruction", "status", "above_threshold", "decision", "note"]
+DECISION_FIELDS = ["finding_id", "finding_key", "scene_id", "severity", "type", "code", "where", "problem", "fix_kind", "fix_instruction", "status", "above_threshold", "decision", "note"]
 DEFECT_FIELDS = ["finding_id", "source_file", "x1", "y1", "x2", "y2", "severity", "type", "code", "confidence", "where", "problem", "fix_kind", "fix_instruction", "status"]
 
 
@@ -31,6 +33,12 @@ def load_docs(book: Book) -> list[dict[str, Any]]:
 def is_defect(f: dict[str, Any]) -> bool:
     """Counted as a defect: not dismissed, not a suggestion or spec conflict, not 'verify'."""
     return f.get("status") != "dismissed" and f.get("type") == "spec_violation" and f.get("confidence") in ("certain", "likely")
+
+
+def finding_key(doc: dict[str, Any], f: dict[str, Any]) -> str:
+    """Identity of a finding on one render: IDs are reused after a re-render, keys are not."""
+    raw = json.dumps([doc["sha256"], f.get("finding_id"), f.get("code"), f.get("bbox")], ensure_ascii=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
 def needs_owner(f: dict[str, Any], threshold_rank: int) -> bool:
@@ -113,7 +121,8 @@ def write_decisions(book: Book, docs: list[dict[str, Any]]) -> list[dict[str, An
         with path.open(encoding="utf-8-sig", newline="") as handle:
             for row in csv.DictReader(handle):
                 if row.get("decision") or row.get("note"):
-                    typed[row["finding_id"]] = {"decision": row.get("decision", ""), "note": row.get("note", "")}
+                    if row.get("finding_key"):
+                        typed[row["finding_key"]] = {"decision": row.get("decision", ""), "note": row.get("note", "")}
     threshold = SEVERITY_RANK[book.cfg["fix_threshold"]]
     queue = []
     for doc in docs:
@@ -122,8 +131,9 @@ def write_decisions(book: Book, docs: list[dict[str, Any]]) -> list[dict[str, An
                 continue
             row = {k: f.get(k, "") for k in DECISION_FIELDS if k in f}
             row["scene_id"] = doc["scene_id"]
+            row["finding_key"] = finding_key(doc, f)
             row["above_threshold"] = "yes" if needs_owner(f, threshold) else "no"
-            row.update(typed.get(f["finding_id"], {"decision": "", "note": ""}))
+            row.update(typed.get(row["finding_key"], {"decision": "", "note": ""}))
             queue.append(row)
     with path.open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=DECISION_FIELDS, extrasaction="ignore")

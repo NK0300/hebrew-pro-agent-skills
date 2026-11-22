@@ -128,8 +128,8 @@ def _require_spec(book: Book, allow_unapproved: bool) -> str | None:
 
     if not rules.spec_files(book):
         return f"No production document in {book.rel(book.spec_dir)}. The audit stops here and asks for it."
-    if not (book.work / "spec.txt").is_file():
-        rules.extract(book)
+    if not (book.work / "spec.txt").is_file() or rules.spec_changed(book):
+        rules.extract(book)  # a changed spec gets a new digest, so the old approval no longer matches
     if not rules.is_approved(book) and not allow_unapproved:
         return "work/rules.yaml is not approved. Fill it from work/spec.txt, show the owner, run `scene-audit rules --approve`."
     return None
@@ -334,6 +334,8 @@ def cmd_decide(args) -> int:
     if args.apply:
         stats = decisions.apply_csv(book)
         _out(f"applied {stats['applied']} decision(s), {stats['skipped']} row(s) left empty")
+        if stats["stale"]:
+            _out(f"!! {stats['stale']} row(s) ignored: the render or the finding changed since the CSV was written. Run scene-audit report and decide again.")
         return 0
     if args.set:
         for item in args.set:

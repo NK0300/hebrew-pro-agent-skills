@@ -89,6 +89,19 @@ def spec_files(book: Book) -> list[Path]:
     return sorted(p for p in folder.rglob("*") if p.is_file() and p.suffix.lower() in SPEC_EXTS)
 
 
+def current_digest(book: Book) -> str:
+    digest = hashlib.sha256()
+    for path in spec_files(book):
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def spec_changed(book: Book) -> bool:
+    """True when the source files differ from what was last extracted."""
+    meta = read_json(book.work / "spec-sections.json", {}) or {}
+    return meta.get("spec_sha256") != current_digest(book)
+
+
 def extract(book: Book) -> dict[str, Any]:
     files = spec_files(book)
     if not files:
@@ -160,14 +173,15 @@ def check_rules(book: Book) -> list[str]:
     for ref in _walk_refs(rules):
         if sections and ref not in sections:
             problems.append(f"spec_ref {ref} is not a section number found in the production document")
-    meta = read_json(book.work / "spec-sections.json", {}) or {}
-    if meta.get("spec_sha256") and rules.get("spec_sha256") and meta["spec_sha256"] != rules["spec_sha256"]:
+    if spec_files(book) and rules.get("spec_sha256") != current_digest(book):
         problems.append("the production document changed after rules.yaml was written. Re-read it and approve again.")
     return problems
 
 
 def approve(book: Book) -> list[str]:
-    problems = check_rules(book)
+    if spec_files(book) and spec_changed(book):
+        extract(book)
+    problems = [p for p in check_rules(book) if "production document changed" not in p]
     hard = [p for p in problems if "missing" in p]
     if hard:
         return hard
@@ -175,7 +189,7 @@ def approve(book: Book) -> list[str]:
     rules = load_rules(book) or {}
     meta = read_json(book.work / "spec-sections.json", {}) or {}
     rules["approved"] = True
-    rules["spec_sha256"] = meta.get("spec_sha256", rules.get("spec_sha256", ""))
+    rules["spec_sha256"] = current_digest(book) if spec_files(book) else meta.get("spec_sha256", "")
     path.write_text(yaml.safe_dump(rules, allow_unicode=True, sort_keys=False), encoding="utf-8")
     return problems
 
@@ -184,8 +198,7 @@ def is_approved(book: Book) -> bool:
     rules = load_rules(book)
     if not rules or not rules.get("approved"):
         return False
-    meta = read_json(book.work / "spec-sections.json", {}) or {}
-    return not meta.get("spec_sha256") or rules.get("spec_sha256") == meta["spec_sha256"]
+    return rules.get("spec_sha256") == current_digest(book)
 
 
 def spec_search(book: Book, term: str) -> list[tuple[int, str]]:

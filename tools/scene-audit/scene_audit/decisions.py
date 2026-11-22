@@ -8,7 +8,7 @@ from typing import Any
 from .config import Book, read_json, write_json
 from .findings import remember_dismissal
 from .geometry import iou
-from .report import needs_owner
+from .report import finding_key, needs_owner
 from . import taxonomy as tx
 
 
@@ -41,13 +41,22 @@ def apply_csv(book: Book) -> dict[str, int]:
     path = book.out / "decisions.csv"
     if not path.is_file():
         raise FileNotFoundError("out/decisions.csv does not exist. Run `scene-audit report` first.")
-    stats = {"applied": 0, "skipped": 0}
+    stats = {"applied": 0, "skipped": 0, "stale": 0}
     with path.open(encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
     for row in rows:
         decision = (row.get("decision") or "").strip()
         if not decision:
             stats["skipped"] += 1
+            continue
+        try:
+            _, doc, finding = _find(book, row["finding_id"])
+        except KeyError:
+            stats["stale"] += 1
+            continue
+        if row.get("finding_key") != finding_key(doc, finding):
+            # The render or the finding changed since this row was written.
+            stats["stale"] += 1
             continue
         set_decision(book, row["finding_id"], decision, (row.get("note") or "").strip())
         stats["applied"] += 1
