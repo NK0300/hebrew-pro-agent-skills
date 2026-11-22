@@ -23,6 +23,10 @@ jobs:
         run: python3 script/validate_skills.py
       - name: Unit tests
         run: python3 -m unittest discover -s tests -v
+      - name: scene-audit tests
+        run: |
+          python3 -m pip install ./tools/scene-audit
+          cd tools/scene-audit && python3 -m unittest discover -s tests -v
       - name: Installer tests
         run: bash script/test-install.sh
       - name: RTL lint

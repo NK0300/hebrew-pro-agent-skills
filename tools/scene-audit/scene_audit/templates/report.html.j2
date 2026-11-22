@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>דוח ביקורת סצנות{% if book %} · {{ book }}{% endif %}</title>
+<style>
+  :root { --ink:#1d1d1f; --muted:#5f6368; --line:#e3e3e3; --bg:#fbfbfa; --crit:#c62828; --med:#b45f00; --min:#1d4ed8; --ok:#137333; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:24px 16px 64px; background:var(--bg); color:var(--ink); font:16px/1.6 "Segoe UI","Arial Hebrew",Arial,"Noto Sans Hebrew",sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  h3 { font-size: 1.05rem; margin: 20px 0 8px; }
+  .muted { color: var(--muted); }
+  .stats { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0; }
+  .stat { background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 14px; min-width:120px; }
+  .stat b { display:block; font-size:1.5rem; }
+  table { width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); font-size:.95rem; }
+  th, td { text-align:start; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:#f3f3f1; font-weight:600; }
+  .sev-critical { color:var(--crit); font-weight:700; }
+  .sev-medium { color:var(--med); font-weight:600; }
+  .sev-minor { color:var(--min); }
+  code { white-space: nowrap; }
+  bdi.num { direction:ltr; unicode-bidi:isolate; }
+  code, bdi.id { font-family: Consolas, "Courier New", monospace; font-size:.9em; direction:ltr; unicode-bidi:isolate; }
+  .scenes { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:14px; }
+  .scene { background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px; }
+  .scene img { width:100%; height:auto; border-radius:6px; display:block; }
+  .empty { color: var(--muted); font-style: italic; }
+  .table-wrap { overflow-x:auto; }
+  footer { margin-top:40px; padding-top:12px; border-top:1px solid var(--line); color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+<h1>דוח ביקורת סצנות{% if book %}: {{ book }}{% endif %}</h1>
+<p class="muted">{{ docs|length }} מתוך {{ scenes_total }} סצנות נסרקו. סף התיקון: {{ threshold_he }} ומעלה.</p>
+
+<div class="stats">
+  <div class="stat"><b class="sev-critical">{{ critical|length }}</b>קריטיים</div>
+  <div class="stat"><b>{{ defect_count }}</b>פגמים בסך הכול</div>
+  <div class="stat"><b>{{ to_verify|length }}</b>לוודא בעין</div>
+  <div class="stat"><b>{{ conflicts|length }}</b>סתירות במפרט</div>
+  <div class="stat"><b>{{ queue|length }}</b>החלטות שמחכות לך</div>
+</div>
+
+{% macro finding_table(items) %}
+{% if items %}
+<div class="table-wrap"><table>
+  <tr><th>מזהה</th><th>חומרה</th><th>קבוצה</th><th>היכן</th><th>הבעיה</th><th>תיקון</th><th>ודאות</th><th>סעיף</th></tr>
+  {% for f in items %}
+  <tr>
+    <td><bdi class="id">{{ f.finding_id }}</bdi></td>
+    <td class="sev-{{ f.severity }}">{{ f.severity_he }}</td>
+    <td>{{ f.code_he }} <bdi class="id">{{ f.code }}</bdi></td>
+    <td>{{ f.where }}</td>
+    <td>{{ f.problem }}</td>
+    <td>{{ f.fix_he }}: {{ f.fix_instruction }}</td>
+    <td>{{ f.confidence_he }}</td>
+    <td>{% if f.spec_ref %}<bdi class="id">{{ f.spec_ref }}</bdi>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="empty">אין.</p>{% endif %}
+{% endmacro %}
+
+<h2>1. הדברים החמורים</h2>
+{{ finding_table(critical) }}
+
+<h2>2. תגי «מצאו»</h2>
+{% for key in ["correct", "wrong", "ambiguous", "unconfirmed"] %}
+<h3>{{ tag_he[key] }} ({{ tags[key]|length }})</h3>
+{% if tags[key] %}
+<div class="table-wrap"><table>
+  <tr><th>סצנה</th><th>פריט</th><th>בתג</th><th>נספרו בתיבות</th><th>הערה</th></tr>
+  {% for t in tags[key] %}
+  <tr><td><bdi class="id">{{ t.scene_id }}</bdi></td><td>{{ t.label }}</td><td>{{ t.expected if t.expected is not none else "—" }}</td><td>{{ t.found }}</td><td>{{ t.note or "" }}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="empty">אין.</p>{% endif %}
+{% endfor %}
+
+<h2>3. עוד ממצאים</h2>
+{{ finding_table(other) }}
+
+<h3>לוודא בעין (לא נספרים כפגם ולא כתקין)</h3>
+{{ finding_table(to_verify) }}
+
+<h2>4. סתירות במפרט</h2>
+<p class="muted">כאן הרינדור אינו אשם. אלה החלטות שלך על המפרט.</p>
+{{ finding_table(conflicts) }}
+
+<h2>5. החלטות שמחכות לך</h2>
+{% if queue %}
+<p>ממלאים את העמודה <code>decision</code> בקובץ <code>decisions.csv</code>: <code>ok</code> (תקין), <code>local</code> (תיקון מקומי) או <code>rerender</code> (רינדור מחדש). אחר כך <code>scene-audit decide --apply</code>.</p>
+<div class="table-wrap"><table>
+  <tr><th>מזהה</th><th>חומרה</th><th>הבעיה</th><th>מומלץ</th></tr>
+  {% for q in queue %}
+  <tr><td><bdi class="id">{{ q.finding_id }}</bdi></td><td class="sev-{{ q.severity }}">{{ sev_he.get(q.severity, q.severity) }}</td><td>{{ q.problem }}</td><td>{{ fix_he.get(q.fix_kind, q.fix_kind) }}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<p class="empty">אין החלטות פתוחות מעל הסף.</p>{% endif %}
+
+{% if suggestions %}
+<h3>הצעות (עניין של טעם, לא נספרות כפגם)</h3>
+{{ finding_table(suggestions) }}
+{% endif %}
+
+{% if format_issues %}
+<h2>פורמט הקבצים</h2>
+<ul>
+{% for sid, issues in format_issues.items() %}<li>סצנה <bdi class="id">{{ sid }}</bdi>: {{ issues|join("; ") }}</li>{% endfor %}
+</ul>
+{% endif %}
+
+<h2>הסצנות</h2>
+<div class="scenes">
+{% for d in docs %}
+  <div class="scene">
+    {% if marked[d.scene_id] %}<a href="{{ marked[d.scene_id] }}"><img src="{{ marked[d.scene_id] }}" alt="סצנה {{ d.scene_id }} מסומנת" loading="lazy"></a>{% endif %}
+    <div><b>סצנה <bdi class="id">{{ d.scene_id }}</bdi></b> {{ d.summary }}</div>
+    <div class="muted">כיסוי <bdi class="num">{{ d.coverage_pct or 0 }}%</bdi> · {{ d.objects|length }} אובייקטים · שלב <bdi class="id">{{ d.stage }}</bdi></div>
+  </div>
+{% endfor %}
+</div>
+{% if contact_sheet %}<p><a href="{{ contact_sheet }}">גיליון מגע של כל הספר</a></p>{% endif %}
+
+<footer>
+  <p>
+    הבדיקה נעשתה בחיתוכים מוגדלים לכל אובייקט.
+    {% for d in docs %}סצנה <bdi class="id">{{ d.scene_id }}</bdi>: כיסוי <bdi class="num">{{ d.coverage_pct or 0 }}%</bdi>{% if d.reviewed_at_px %}, חיתוכים של לפחות {{ d.reviewed_at_px }} פיקסלים{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}.
+    {% if not_done %}לא הושלמו: {% for s in not_done %}<bdi class="id">{{ s }}</bdi>{% if not loop.last %}, {% endif %}{% endfor %}.{% endif %}
+    {{ to_verify|length }} פריטים מסומנים «לוודא» ולא אומתו.
+  </p>
+  <p>מילים מנוקדות שמודל ייצר דורשות הגהה אנושית לפני דפוס. הכלי לא מאשר ניקוד.</p>
+</footer>
+</main>
+</body>
+</html>
