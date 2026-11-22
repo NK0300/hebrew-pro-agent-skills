@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scene-audit"
+version = "0.1.0"
+description = "Object-level audit of illustrated book scenes, driven by Claude Code"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "Pillow>=10.1",
+  "PyYAML>=6.0",
+  "Jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+pdf = ["pypdf>=4.0"]
+
+[project.scripts]
+scene-audit = "scene_audit.cli:main"
+
+[tool.setuptools]
+packages = ["scene_audit"]
+
+[tool.setuptools.package-data]
+scene_audit = ["data/*", "templates/*"]

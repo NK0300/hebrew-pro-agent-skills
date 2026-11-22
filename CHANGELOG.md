@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `tools/scene-audit`: a Python CLI and Claude Code skill for object-level audits of illustrated book scenes (inventory, tiles, zoomed crops, coverage, independent second pass, Hebrew RTL report, decision queue, recheck after re-render).
+
 ## 1.0.0 - 2026-11-15
 
 First public release of the Hebrew-first agent skills.

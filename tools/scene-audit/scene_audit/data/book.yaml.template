@@ -1,0 +1,40 @@
+# scene-audit settings for one book. Paths are relative to this file.
+book: "{{book}}"
+
+paths:
+  scenes: "{{scenes}}"        # source renders. Read only, never modified.
+  spec: "{{spec}}"            # production document: .md, .txt, .docx or .pdf (file or folder)
+  words: null                 # word list CSV, if the book has a dictionary
+  item_sheets: null           # folder of item-strip sheets (PNG), if the book has one
+  tracking: []                # checklists / tag audits / page maps (.csv or .xlsx)
+  prior_reviews: []           # reviews by other tools: claims to check, not facts
+
+format:
+  layout: "{{layout}}"        # single | spread
+  width_px: null              # expected render size, e.g. 4096
+  height_px: null
+  tolerance_pct: 2
+
+# Scene id = the last number in the file name, zero-padded (scene-7.png -> 07).
+scene_id_pattern: '(\d+)(?!.*\d)'
+
+scan:
+  tiles: [3, 3]               # rows, columns for the second mapping pass
+  tile_overlap: 0.15
+  crop_padding: 0.20          # margin around each object crop
+  crop_min_short_side: 768    # each object crop is enlarged to at least this
+  crop_max_long_side: 2048    # larger objects are split into parts at full resolution
+  crop_max_scale: 8
+  context_padding: 1.0        # context crop = object box + 100% on every side
+  view_max_side: 1568
+  gap_grid: 6                 # areas no object crop covers get their own zoomed view
+  dedupe_iou: 0.5
+
+# Lowest severity that goes to the fix queue: critical | medium | minor
+fix_threshold: medium
+
+features:
+  find_tags: true             # «מצאו» tags with counts
+  item_strip: true            # item strip that must match the scene
+  words: true                 # word list with a visible item per word
+  spreads: false              # continuity across the two halves of a spread
