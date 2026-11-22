@@ -34,10 +34,10 @@ def cmd_init(args) -> int:
         _out(f"{target} already exists. Use --force to overwrite.")
         return 1
     template = resources.files("scene_audit").joinpath("data/book.yaml.template").read_text(encoding="utf-8")
-    template = template.replace("{{book}}", args.name or root.name)
-    template = template.replace("{{scenes}}", args.scenes or "scenes")
-    template = template.replace("{{spec}}", args.spec or "spec")
-    template = template.replace("{{layout}}", args.layout)
+    values = {"book": args.name or root.name, "scenes": args.scenes or "scenes", "spec": args.spec or "spec", "layout": args.layout}
+    for key, value in values.items():
+        # A JSON string is a valid YAML double-quoted scalar: backslashes in Windows paths and quotes stay literal.
+        template = template.replace(f'"{{{{{key}}}}}"', json.dumps(value, ensure_ascii=False))
     target.write_text(template, encoding="utf-8")
     for folder in ([] if args.scenes else ["scenes"]) + ([] if args.spec else ["spec"]) + ["work", "out"]:
         (root / folder).mkdir(exist_ok=True)

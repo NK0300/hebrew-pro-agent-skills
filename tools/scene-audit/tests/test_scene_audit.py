@@ -302,6 +302,17 @@ class EndToEndTest(unittest.TestCase):
             self.assertEqual(next(csv.DictReader(handle))["decision"], "")
         self.assertFalse((self.root / "work" / "dismissed.json").exists())
 
+    def test_init_with_windows_path_and_quotes(self):
+        root = Path(self.tmp.name) / "win"
+        code, out = run("init", str(root), "--name", 'ספר "חג"', "--spec", "spec\\production.docx", "--scenes", "C:\\renders\\book")
+        self.assertEqual(code, 0, out)
+        from scene_audit.config import Book
+
+        cfg = Book.load(root).cfg
+        self.assertEqual(cfg["paths"]["spec"], "spec\\production.docx")
+        self.assertEqual(cfg["paths"]["scenes"], "C:\\renders\\book")
+        self.assertEqual(cfg["book"], 'ספר "חג"')
+
     def test_skill_install(self):
         dest = Path(self.tmp.name) / "skills"
         code, out = run("skill", "--dest", str(dest))
